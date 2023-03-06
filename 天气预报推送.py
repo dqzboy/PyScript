@@ -1,47 +1,38 @@
 import requests
-import re
-import urllib.request
 import json
-import sys
-import os
-import time
-import time,datetime
-holiday_info = {}
-CUR_YEAR = '2022'  #定义年份
-##这里字符集改为了gbk
-headers = {'Content-Type': 'application/json;charset=gbk'}
-webhook = "企业微信机器人webhook"
-url = "https://tianqi.moji.com/weather/china/shanghai/minhang-district" 
-par = '(<meta name="description" content=")(.*?)(">)'
-opener = urllib.request.build_opener()
-urllib.request.install_opener(opener)
-html = urllib.request.urlopen(url).read().decode("utf-8")
-data = re.search(par,html).group(2)
-def msg(text):
-    message= {
-     "msgtype": "text",
-        "text": {
-            "content": text,
-            "mentioned_list":["@all"]
-        }
+import datetime
+
+# 获取当前日期
+today = datetime.date.today().strftime("%Y-%m-%d")
+
+# 输入城市名称（拼音）
+city = input("请输入城市名称（拼音）:")
+
+# 从API获取天气信息
+response = requests.get(f"https://tianqiapi.com/free/day?appid=你的API密钥&appsecret=你的API密钥&city={city}&date={today}")
+
+# 转换JSON格式
+weather_info = json.loads(response.text)
+
+# 提取需要的信息
+date = weather_info["date"]
+week = weather_info["week"]
+wea = weather_info["wea"]
+tem = weather_info["tem"]
+win = weather_info["win"]
+air = weather_info["air"]
+humidity = weather_info["humidity"]
+
+# 构建消息体
+message = f"今天是{date} {week}，{city}天气为{wea}，温度为{tem}℃，风向是{win}，空气质量为{air}，湿度为{humidity}%。"
+
+# 发送消息到企业微信机器人
+webhook_url = "https://qyapi.weixin.qq.com/cgi-bin/webhook/send?key=你的Webhook Key"
+data = {
+    "msgtype": "text",
+    "text": {
+        "content": message
     }
-    print(requests.post(webhook,json.dumps(message),headers=headers).content)
-def init_holiday_info():
-    global holiday_info
-    rep = requests.get('http://tool.bitefu.net/jiari/?d=' + CUR_YEAR)
-    info_txt = rep.content.decode()
-    holiday_info =  json.loads(info_txt)
-
-def check_if_is_work_day():
-    day_info = time.strftime("%m%d",time.localtime(time.time()))
-    print(day_info)
-    if day_info in holiday_info[CUR_YEAR]:
-        return False
-    week = datetime.datetime.now().weekday()
-    if 0 <= week and 4 >= week:
-        msg(data)   #调用期企业微信推送内容
-    return False
-
-if __name__ == "__main__":
-     init_holiday_info()
-     check_if_is_work_day()
+}
+response = requests.post(url=webhook_url, data=json.dumps(data))
+print(response.text)
