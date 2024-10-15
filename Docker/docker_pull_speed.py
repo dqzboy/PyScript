@@ -9,6 +9,9 @@ from colorama import init, Fore, Style
 from rich.console import Console
 from rich.table import Table
 
+# 需要安装的模块：pip install docker requests colorama rich
+
+
 # 初始化 colorama
 init(autoreset=True)
 
